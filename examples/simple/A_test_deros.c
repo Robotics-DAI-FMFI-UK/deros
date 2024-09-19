@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "../../deros.h"
 
@@ -18,10 +18,13 @@ void callback_for_B(uint8_t *message, int length)
   printf("node A subscribed to B received new message %d of length %d\n", *((int *)message), length);
 }
 
-int main()
+int main(int argc, char **argv)
 {
+  char *log_path = LOG_PATH;
+  if ((argc > 2) && (strcmp(argv[1], "--logpath") == 0)) log_path = argv[2];
+
   printf("module A started\n");
-  int my_node_id = deros_init("127.0.0.1", DEFAULT_DEROS_SERVER_PORT, "nodeA", PORT_MODULE_A, LOG_PATH);
+  int my_node_id = deros_init("127.0.0.1", DEFAULT_DEROS_SERVER_PORT, "nodeA", PORT_MODULE_A, log_path);
   if (my_node_id < 0)
   {
     printf("could not init deros\n");

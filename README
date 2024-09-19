@@ -1,6 +1,7 @@
-Deros, version 0.1 alpha
+DESCRIPTION
 
-A communication framework for distributed system.
+Deros, version 0.1 alpha, September 2024
+A communication framework for distributed system for C or C++ projects in Linux environment.
 
 Individual processes running on the same TCP/IP network can register as publishers or subscribers
 of messages sent to some address (any character string). Server maintains registrations, but
@@ -39,19 +40,21 @@ Nodes, subscribers, and publishers can be dynamically created and removed during
     messages are allowed (specify -1 as message_size).
     message queues are not supported in this version - messages are delivered immediately,
     reserved for future versions, always use value 1 in this version for compatibility.
+    the function returns an integer identifier of this publisher that needs to be passed
+    to functions that expect publisher_id.
 
 
    int publish(int publisher_id, uint8_t *message, int msg_len);
  
-    publish a message from the specified publisher to a specified address
+    publish a message from the specified publisher to its publishing address
     (provide message length for "type" checking)
     the message is immediately delivered to all current subscribers.
 
 
    void publisher_unregister(int publisher_id);
 
-    remove the specified publisher from the framework agenda when you won't plan to publish
-    more messages to this address - connections with subscribers are closed
+    remove the specified publisher from the framework agenda when you don't plan to publish
+    more messages from this publisher - internal connections with subscribers are automatically closed
 
 
    int publisher_log_enable(int publisher_id, int enable);
@@ -59,19 +62,25 @@ Nodes, subscribers, and publishers can be dynamically created and removed during
     enable(1) or disable(0) logging of all messages of the specified publisher to message log
 
    
-   int subscriber_register(int node_id, char *address, int message_size, subscriber_callback_function callback, int msg_queue_size);
+   int subscriber_register(int node_id, char *address, int message_size, 
+                           subscriber_callback_function callback, int msg_queue_size);
 
     register a subscriber in a specified node to a specified address,
-    specify the expected message size for "type" checking,
+    specify the expected message size for "type" checking, -1 for messages of variable size,
     provide a callback function that will be automatically called from a different thread
     each time a new message is published to the subscribed address,
     message queues are currently not supported, messages are delivered immediately,
     use value 1, reserved for future versions
+    the function returns an integer identifier of this subscriber that needs to be passed
+    to functions that expect subscriber_id. 
+
     The callback function has the following type:
 
      void subscriber_callback_function(uint8_t *message, int length);
 
-     the message is located in dynamic memory and will be deallocated after the function returns
+     the message is located in dynamic memory and will be deallocated after the function returns,
+     in this version: the callback function is expected to return as soon as possible, 
+     otherwise it may block delivering of other messages of this node (each node has a separate thread)
 
 
    void subscriber_unregister(int subscriber_id);
@@ -88,21 +97,31 @@ Nodes, subscribers, and publishers can be dynamically created and removed during
     void publisher_log_prettyprint(int publisher_id, char *(*pretty_printer)(uint8_t *message, int length));
 
 
-COMPILING:
+DOWNLOADING
+
+  git clone https://github.com/Robotics-DAI-FMFI-UK/deros.git
+
+
+COMPILING
 
   make
 
-TESTING:
+
+TESTING
 
   open 3 terminal windows and run the following commands - one per window:
 
-  bin/server
-  bin/A_test_deros
-  bin/B_test_deros
+  bin/deros_server --logpath YOUR_LOG_PATH    (or change the default in server/deros_server.h)
+  bin/A_test_deros --logpath YOUR_LOG_PATH    (or change in examples/simple/A_test_deros.c)
+  bin/B_test_deros --logpath YOUR_LOG_PATH    (or change in examples/simple/B_test_deros.c)
 
+
+USAGE
 
 To see how to use this framework in your program, study the examples/ folder.
+
+
 This version is very likely to contain bugs and issues, but feel free to comment, or open issues on Github.
-https://github.com/Robotics-DAI-FMFI-UK/deros.git
+  https://github.com/Robotics-DAI-FMFI-UK/deros
 Contact: Pavel, pavel.petrovic@gmail.com
 

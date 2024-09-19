@@ -365,16 +365,14 @@ void publisher_log_prettyprint(int publisher_id, pretty_print_function pretty_pr
 char *double_pretty_printer(uint8_t *message, int length)
 {
     static char dbl[30];
-    strncpy(dbl, (char *)message, 29);
-    dbl[29] = 0;
+    sprintf(dbl, "%28f", *((double *)message));
     return dbl;
 }
 
 char *int_pretty_printer(uint8_t *message, int length)
 {
     static char inte[30];
-    strncpy(inte, (char *)message, 30);
-    inte[29] = 0;
+    sprintf(inte, "%d", *((int *)message));
     return inte;
 }
 
