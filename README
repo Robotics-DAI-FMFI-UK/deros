@@ -1,0 +1,108 @@
+Deros, version 0.1 alpha
+
+A communication framework for distributed system.
+
+Individual processes running on the same TCP/IP network can register as publishers or subscribers
+of messages sent to some address (any character string). Server maintains registrations, but
+the communication is peer-to-peer. Publishers and subscribers belong to "nodes" (which is
+just a useless abstract bracket for a group of publishers and subscribers that has a name).
+Nodes need to initialize their access to the framework first. 
+Multiple nodes per process are allowed. Multiple publishers and subscribers per node are allowed.
+Multiple publishers/subscribers to the same address even within the same node are also allowed.
+Each publisher publishes only to a single address, each subscriber subscribed to a single address. 
+Nodes, subscribers, and publishers can be dynamically created and removed during the program run.
+
+
+   int deros_init(char *server_address, int server_port, char *node_name, int listen_port, char *log_path);
+
+    register as a new node with the specified node_name at a server running at specified IP:port,
+    provide listen_port that will be specific to this node - for listening to messages from publishers
+    sent to addresses that this node will subscribe to, provide a log_path - a relative or absolute
+    path to a folder where debug and message log files will be saved
+    Notice: message log needs to be enabled, debug level can be configured with
+       void deros_dbglog_set_minimum_level(int min_level);
+       void deros_dbglog_enable_level(int level, int enable);
+
+    the returned value is an integer identifier of the node, which needs to be passed to 
+    some other functions when interacting with the framework
+
+
+   void deros_done(int node_id);
+
+    close this node connection to the framework (you can initialize it again later).
+
+
+   int publisher_register(int node_id, char *address, int message_size, int message_queue_size);
+
+    register as a publisher in a specified node to a specified address,
+    messages are typically of fixed size (you specify it here), but variable-len
+    messages are allowed (specify -1 as message_size).
+    message queues are not supported in this version - messages are delivered immediately,
+    reserved for future versions, always use value 1 in this version for compatibility.
+
+
+   int publish(int publisher_id, uint8_t *message, int msg_len);
+ 
+    publish a message from the specified publisher to a specified address
+    (provide message length for "type" checking)
+    the message is immediately delivered to all current subscribers.
+
+
+   void publisher_unregister(int publisher_id);
+
+    remove the specified publisher from the framework agenda when you won't plan to publish
+    more messages to this address - connections with subscribers are closed
+
+
+   int publisher_log_enable(int publisher_id, int enable);
+
+    enable(1) or disable(0) logging of all messages of the specified publisher to message log
+
+   
+   int subscriber_register(int node_id, char *address, int message_size, subscriber_callback_function callback, int msg_queue_size);
+
+    register a subscriber in a specified node to a specified address,
+    specify the expected message size for "type" checking,
+    provide a callback function that will be automatically called from a different thread
+    each time a new message is published to the subscribed address,
+    message queues are currently not supported, messages are delivered immediately,
+    use value 1, reserved for future versions
+    The callback function has the following type:
+
+     void subscriber_callback_function(uint8_t *message, int length);
+
+     the message is located in dynamic memory and will be deallocated after the function returns
+
+
+   void subscriber_unregister(int subscriber_id);
+
+    remove the specified subscriber from the framework agenda,
+    messages published to the subscribed address will not be delivered to this subscriber anymore
+
+
+   Since messages are potentially binary packets, their logging (if enabled) is by default implemented
+   as printing only printable characters as well as the numeric values of the respective bytes, but
+   only max. 100 bytes of each packet. Alternately, the publisher can provide a pretty-print function
+   that will convert the binary message to a printable string:
+
+    void publisher_log_prettyprint(int publisher_id, char *(*pretty_printer)(uint8_t *message, int length));
+
+
+COMPILING:
+
+  make
+
+TESTING:
+
+  open 3 terminal windows and run the following commands - one per window:
+
+  bin/server
+  bin/A_test_deros
+  bin/B_test_deros
+
+
+To see how to use this framework in your program, study the examples/ folder.
+This version is very likely to contain bugs and issues, but feel free to comment, or open issues on Github.
+https://github.com/Robotics-DAI-FMFI-UK/deros.git
+Contact: Pavel, pavel.petrovic@gmail.com
+
